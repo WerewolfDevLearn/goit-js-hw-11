@@ -1,5 +1,5 @@
 import axios from 'axios';
-import key from './key';
+const key = '17822127-e9a9a0a140ac0dca1ff979a25';
 
 export async function getImages(string, page, prePage) {
   try {
