@@ -14,9 +14,12 @@ const lightbox = new SimpleLightbox('.gallery a', {
 const state = {
   arrOfImages: [],
   page: 1,
+  prePage: 40,
   totalPics: 0,
   keyword: '',
+  isLastPage: false,
 };
+console.log('intialState', state);
 
 form.submit.addEventListener('click', onSubmit);
 buttonLM.addEventListener('click', loadMore);
@@ -27,22 +30,26 @@ async function onSubmit(event) {
     Notify.info('Please enter keyword!');
     return;
   }
+  console.log('keyword and queryword', state.keyword === form.query.value);
+  if (state.keyword === form.query.value) {
+    Notify.info('Please enter new keyword!');
+    return;
+  }
+  console.log(state.page);
+  buttonLM.classList.add('button-hidden');
   state.keyword = form.query.value;
-  console.log(state);
-  const data = await getImages(state.keyword, state.page);
-  setState(data);
-  console.log(state);
-  Notify.info(`Hooray! We found ${state.totalPics} images.`);
   gallery.innerHTML = '';
+  state.page = 1;
+  const data = await getImages(state.keyword, state.page, state.prePage);
+  setState(data);
+  Notify.info(`Hooray! We found ${state.totalPics} images.`);
   injectGalleryItem(state.arrOfImages);
-  toggleButton();
 }
 async function loadMore() {
-  const data = await getImages(state.keyword, state.page);
+  console.log(state.page);
+  const data = await getImages(state.keyword, state.page, state.prePage);
   setState(data);
   injectGalleryItem(state.arrOfImages);
-  console.log(state);
-  toggleButton();
 }
 
 function setState(data) {
@@ -55,13 +62,10 @@ function setState(data) {
   state.arrOfImages = [];
   state.arrOfImages = [...data.hits];
   state.totalPics = data.totalHits;
-  state.page = state.page + 1;
-}
 
-function resetState() {
-  state.arrOfImages = [];
-  state.page = 1;
-  state.totalPics = 0;
+  isLastPage();
+  toggleButton(state.isLastPage);
+  state.page = state.page + 1;
 }
 
 function injectGalleryItem(arr) {
@@ -73,11 +77,21 @@ function injectGalleryItem(arr) {
     behavior: 'smooth',
   });
 }
-function toggleButton() {
-  if (state.page > 1 && state.page * 40 < state.totalPics) {
-    buttonLM.classList.remove('button-hidden');
+function isLastPage() {
+  const dif = state.totalPics - state.page * state.prePage;
+  if (dif <= 0) {
+    state.isLastPage = true;
   } else {
+    state.isLastPage = false;
+  }
+  console.log('lastPage', state.isLastPage);
+}
+
+function toggleButton(bulleon) {
+  if (bulleon) {
     buttonLM.classList.add('button-hidden');
-    Notify.info("We're sorry, but you've reached the end of search results.");
+    Notify.info("We're sorry,but you've reached the end of search results.");
+  } else {
+    buttonLM.classList.remove('button-hidden');
   }
 }
